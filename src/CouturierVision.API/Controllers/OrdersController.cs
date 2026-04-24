@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using CouturierVision.Application.Commands;
 using CouturierVision.Application.DTOs;
+using CouturierVision.Application.Queries;
 
 namespace CouturierVision.API.Controllers;
 
@@ -16,6 +17,15 @@ public class OrdersController : ControllerBase
     public OrdersController(IMediator mediator)
     {
         _mediator = mediator;
+    }
+
+    /// <summary>Get all orders</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<OrderDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var result = await _mediator.Send(new GetAllOrdersQuery(), ct);
+        return Ok(result);
     }
 
     /// <summary>Create a new order (Draft status)</summary>
@@ -39,6 +49,17 @@ public class OrdersController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Reject an order and reset it to Draft</summary>
+    [HttpPut("{id:guid}/reject")]
+    [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Reject(Guid id, [FromBody] RejectOrderRequest request, CancellationToken ct)
+    {
+        var result = await _mediator.Send(new RejectOrderCommand(id, request.Reason), ct);
+        return Ok(result);
+    }
+
     /// <summary>Register a deposit payment for an order</summary>
     [HttpPost("{id:guid}/deposit")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
@@ -52,3 +73,4 @@ public class OrdersController : ControllerBase
 }
 
 public record RegisterDepositRequest(decimal Amount);
+public record RejectOrderRequest(string Reason);
