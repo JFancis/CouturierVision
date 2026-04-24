@@ -69,7 +69,7 @@ interface KanbanColumn {
                     </div>
 
                     <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                      <div class="flex items-center gap-1" role="img" [attr.aria-label]="'Échéance: ' + formatDate(order.deadline)">
+                      <div class="flex items-center gap-1" [attr.aria-label]="'Échéance: ' + formatDate(order.deadline)">
                         <span>📅</span>
                         <span>{{ formatDate(order.deadline) }}</span>
                       </div>
