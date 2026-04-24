@@ -1,0 +1,25 @@
+# .NET
+*.user
+*.suo
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+.vs/
+.idea/
+.vscode/
+*.ncrunchproject
+nuget.config
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+frontend/.angular/
+
+# Docker
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
