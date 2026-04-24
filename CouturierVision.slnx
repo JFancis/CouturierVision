@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CouturierVision.API/CouturierVision.API.csproj" />
+    <Project Path="src/CouturierVision.Application/CouturierVision.Application.csproj" />
+    <Project Path="src/CouturierVision.Domain/CouturierVision.Domain.csproj" />
+    <Project Path="src/CouturierVision.Infrastructure/CouturierVision.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CouturierVision.Application.Tests/CouturierVision.Application.Tests.csproj" />
+    <Project Path="tests/CouturierVision.Domain.Tests/CouturierVision.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
