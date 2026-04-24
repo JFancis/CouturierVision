@@ -19,6 +19,15 @@ public class ClientsController : ControllerBase
         _mediator = mediator;
     }
 
+    /// <summary>Get all clients</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ClientDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var result = await _mediator.Send(new GetAllClientsQuery(), ct);
+        return Ok(result);
+    }
+
     /// <summary>Create a new client</summary>
     [HttpPost]
     [ProducesResponseType(typeof(ClientDto), StatusCodes.Status201Created)]

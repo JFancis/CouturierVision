@@ -1,13 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { ClientService } from '../../../core/services/client.service';
 import { ClientFormComponent } from '../client-form/client-form.component';
 
 @Component({
   selector: 'app-client-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ClientFormComponent],
+  imports: [CommonModule, ClientFormComponent],
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
@@ -59,9 +58,13 @@ import { ClientFormComponent } from '../client-form/client-form.component';
     </div>
   `
 })
-export class ClientListComponent {
+export class ClientListComponent implements OnInit {
   protected readonly clientService = inject(ClientService);
   protected readonly showForm = signal(false);
+
+  ngOnInit(): void {
+    this.clientService.loadClients().subscribe();
+  }
 
   onClientCreated() {
     this.showForm.set(false);

@@ -33,4 +33,7 @@ public class OrderRepository : IOrderRepository
         => await _context.Orders
             .Where(o => o.ClientId == clientId)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Order>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await _context.Orders.ToListAsync(cancellationToken);
 }

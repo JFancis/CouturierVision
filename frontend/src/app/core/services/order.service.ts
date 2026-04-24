@@ -25,6 +25,13 @@ export type OrderStatus =
   | 'Ready'
   | 'Delivered';
 
+export interface CreateOrderRequest {
+  clientId: string;
+  totalPrice: number;
+  measurementsJson: string;
+  deadline: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly apiUrl = '/api/orders';
@@ -35,8 +42,16 @@ export class OrderService {
     return this.http.get<OrderDto[]>(this.apiUrl);
   }
 
+  createOrder(request: CreateOrderRequest): Observable<OrderDto> {
+    return this.http.post<OrderDto>(this.apiUrl, request);
+  }
+
   advanceOrder(id: string): Observable<OrderDto> {
     return this.http.put<OrderDto>(`${this.apiUrl}/${id}/advance`, {});
+  }
+
+  rejectOrder(id: string, reason: string): Observable<OrderDto> {
+    return this.http.put<OrderDto>(`${this.apiUrl}/${id}/reject`, { reason });
   }
 
   registerDeposit(id: string, amount: number): Observable<OrderDto> {

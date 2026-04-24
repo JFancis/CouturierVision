@@ -28,4 +28,7 @@ public class ClientRepository : IClientRepository
         _context.Clients.Update(client);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Client>> GetAllAsync(CancellationToken cancellationToken = default)
+        => await _context.Clients.ToListAsync(cancellationToken);
 }

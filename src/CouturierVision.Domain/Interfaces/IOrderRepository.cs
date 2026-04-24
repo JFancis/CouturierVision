@@ -8,4 +8,5 @@ public interface IOrderRepository
     Task AddAsync(Order order, CancellationToken cancellationToken = default);
     Task UpdateAsync(Order order, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Order>> GetByClientIdAsync(Guid clientId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Order>> GetAllAsync(CancellationToken cancellationToken = default);
 }
