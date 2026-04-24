@@ -1,6 +1,6 @@
+using MediatR;
 using CouturierVision.Application.DTOs;
 using CouturierVision.Domain.Interfaces;
-using MediatR;
 
 namespace CouturierVision.Application.Queries;
 
@@ -15,7 +15,7 @@ public class GetClientByIdQueryHandler : IRequestHandler<GetClientByIdQuery, Cli
 
     public async Task<ClientDto?> Handle(GetClientByIdQuery request, CancellationToken cancellationToken)
     {
-        var client = await _clientRepository.GetByIdAsync(request.Id, cancellationToken);
+        var client = await _clientRepository.GetByIdAsync(request.ClientId, cancellationToken);
         if (client is null) return null;
 
         return new ClientDto(

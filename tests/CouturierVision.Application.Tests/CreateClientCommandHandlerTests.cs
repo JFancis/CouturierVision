@@ -8,27 +8,33 @@ namespace CouturierVision.Application.Tests;
 
 public class CreateClientCommandHandlerTests
 {
-    private readonly Mock<IClientRepository> _repoMock = new();
-    private readonly CreateClientCommandHandler _handler;
-
-    public CreateClientCommandHandlerTests()
-    {
-        _handler = new CreateClientCommandHandler(_repoMock.Object);
-    }
+    private readonly Mock<IClientRepository> _repositoryMock = new();
 
     [Fact]
     public async Task Handle_ValidCommand_ReturnsClientDto()
     {
-        var command = new CreateClientCommand("Jean", "Dupont", "jean@example.com", "+33612345678", "Classic");
-        _repoMock.Setup(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()))
-                 .Returns(Task.CompletedTask);
+        _repositoryMock
+            .Setup(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var handler = new CreateClientCommandHandler(_repositoryMock.Object);
+        var command = new CreateClientCommand("Jean", "Dupont", "jean@example.com", "0601020304", "Classique");
+
+        var result = await handler.Handle(command, CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Equal("jean@example.com", result.Email);
         Assert.Equal("Jean", result.FirstName);
-        Assert.Equal("Dupont", result.LastName);
-        _repoMock.Verify(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal("jean@example.com", result.Email);
+        _repositoryMock.Verify(r => r.AddAsync(It.IsAny<Client>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_InvalidEmail_ThrowsDomainException()
+    {
+        var handler = new CreateClientCommandHandler(_repositoryMock.Object);
+        var command = new CreateClientCommand("Jean", "Dupont", "not-an-email", "0601020304", "Classique");
+
+        await Assert.ThrowsAsync<CouturierVision.Domain.Exceptions.DomainException>(
+            () => handler.Handle(command, CancellationToken.None));
     }
 }

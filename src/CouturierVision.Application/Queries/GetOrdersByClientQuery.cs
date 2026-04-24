@@ -3,4 +3,4 @@ using CouturierVision.Application.DTOs;
 
 namespace CouturierVision.Application.Queries;
 
-public record GetClientByIdQuery(Guid ClientId) : IRequest<ClientDto?>;
+public record GetOrdersByClientQuery(Guid ClientId) : IRequest<IReadOnlyList<OrderDto>>;

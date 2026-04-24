@@ -1,7 +1,8 @@
+using MediatR;
 using CouturierVision.Application.DTOs;
 using CouturierVision.Domain.Entities;
 using CouturierVision.Domain.Interfaces;
-using MediatR;
+using CouturierVision.Domain.ValueObjects;
 
 namespace CouturierVision.Application.Commands;
 
@@ -16,10 +17,11 @@ public class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, C
 
     public async Task<ClientDto> Handle(CreateClientCommand request, CancellationToken cancellationToken)
     {
-        var client = Client.Create(
+        var client = new Client(
+            Guid.NewGuid(),
             request.FirstName,
             request.LastName,
-            request.Email,
+            new Email(request.Email),
             request.PhoneNumber,
             request.StylePreferences);
 

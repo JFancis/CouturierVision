@@ -1,12 +1,13 @@
+using CouturierVision.Domain.Enums;
+
 namespace CouturierVision.Application.DTOs;
 
 public record OrderDto(
     Guid Id,
     Guid ClientId,
-    string Status,
+    OrderStatus Status,
     decimal TotalPrice,
     decimal DepositPaid,
-    decimal DepositPercentage,
     string MeasurementsJson,
     DateTime Deadline,
     Guid? AssignedArtisanId);

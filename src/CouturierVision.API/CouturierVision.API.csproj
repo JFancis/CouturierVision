@@ -10,16 +10,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.14" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.3.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CouturierVision.Application\CouturierVision.Application.csproj" />
     <ProjectReference Include="..\CouturierVision.Infrastructure\CouturierVision.Infrastructure.csproj" />
+    <ProjectReference Include="..\CouturierVision.Application\CouturierVision.Application.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
-using CouturierVision.Application.Commands;
 using FluentValidation;
+using CouturierVision.Application.Commands;
 
 namespace CouturierVision.Application.Validators;
 
@@ -8,6 +8,6 @@ public class RegisterDepositCommandValidator : AbstractValidator<RegisterDeposit
     public RegisterDepositCommandValidator()
     {
         RuleFor(x => x.OrderId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Deposit amount must be positive.");
+        RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Deposit amount must be greater than zero.");
     }
 }

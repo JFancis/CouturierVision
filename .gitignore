@@ -1,25 +1,37 @@
 # .NET
+bin/
+obj/
 *.user
 *.suo
-[Bb]in/
-[Oo]bj/
-[Ll]ogs/
 .vs/
-.idea/
-.vscode/
-*.ncrunchproject
-nuget.config
+*.sln.DotSettings.user
+TestResults/
 
-# Node / Angular
-node_modules/
-dist/
-.angular/
-npm-debug.log*
+# ASP.NET Core
+appsettings.Development.json
+
+# Angular / Node
+frontend/node_modules/
+frontend/dist/
 frontend/.angular/
+frontend/.cache/
+*.tgz
+
+# macOS
+.DS_Store
+
+# PostgreSQL
+*.dump
+*.sql.bak
+
+# Rider / JetBrains
+.idea/
+*.DotSettings
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # Docker
-*.env.local
-
-# OS
-.DS_Store
-Thumbs.db
+docker-compose.override.yml

@@ -14,8 +14,8 @@ public class OrderRepository : IOrderRepository
         _context = context;
     }
 
-    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await _context.Orders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => await _context.Orders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 
     public async Task AddAsync(Order order, CancellationToken cancellationToken = default)
     {
@@ -29,6 +29,8 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Order>> GetByClientIdAsync(Guid clientId, CancellationToken cancellationToken = default) =>
-        await _context.Orders.Where(o => o.ClientId == clientId).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<Order>> GetByClientIdAsync(Guid clientId, CancellationToken cancellationToken = default)
+        => await _context.Orders
+            .Where(o => o.ClientId == clientId)
+            .ToListAsync(cancellationToken);
 }

@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CouturierVision.Application\CouturierVision.Application.csproj" />
-    <ProjectReference Include="..\CouturierVision.Domain\CouturierVision.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -11,8 +10,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.3" />
   </ItemGroup>
 
   <PropertyGroup>

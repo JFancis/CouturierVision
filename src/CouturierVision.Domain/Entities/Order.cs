@@ -5,16 +5,17 @@ namespace CouturierVision.Domain.Entities;
 
 public class Order
 {
-    private static readonly Dictionary<OrderStatus, OrderStatus> ValidTransitions = new()
-    {
-        { OrderStatus.Draft,      OrderStatus.Confirmed },
-        { OrderStatus.Confirmed,  OrderStatus.Cutting   },
-        { OrderStatus.Cutting,    OrderStatus.Assembly  },
-        { OrderStatus.Assembly,   OrderStatus.Fitting   },
-        { OrderStatus.Fitting,    OrderStatus.Finishing },
-        { OrderStatus.Finishing,  OrderStatus.Ready     },
-        { OrderStatus.Ready,      OrderStatus.Delivered },
-    };
+    private static readonly IReadOnlyDictionary<OrderStatus, OrderStatus> ValidTransitions =
+        new Dictionary<OrderStatus, OrderStatus>
+        {
+            [OrderStatus.Draft] = OrderStatus.Confirmed,
+            [OrderStatus.Confirmed] = OrderStatus.Cutting,
+            [OrderStatus.Cutting] = OrderStatus.Assembly,
+            [OrderStatus.Assembly] = OrderStatus.Fitting,
+            [OrderStatus.Fitting] = OrderStatus.Finishing,
+            [OrderStatus.Finishing] = OrderStatus.Ready,
+            [OrderStatus.Ready] = OrderStatus.Delivered,
+        };
 
     public Guid Id { get; private set; }
     public Guid ClientId { get; private set; }
@@ -24,44 +25,36 @@ public class Order
     public string MeasurementsJson { get; private set; } = string.Empty;
     public DateTime Deadline { get; private set; }
     public Guid? AssignedArtisanId { get; private set; }
+    public string? RejectionReason { get; private set; }
 
     private Order() { }
 
-    public static Order Create(
+    public Order(
+        Guid id,
         Guid clientId,
         decimal totalPrice,
         string measurementsJson,
-        DateTime deadline,
-        Guid? assignedArtisanId = null)
+        DateTime deadline)
     {
-        if (totalPrice <= 0)
-            throw new DomainException("Total price must be positive.");
-
-        return new Order
-        {
-            Id = Guid.NewGuid(),
-            ClientId = clientId,
-            Status = OrderStatus.Draft,
-            TotalPrice = totalPrice,
-            DepositPaid = 0,
-            MeasurementsJson = measurementsJson,
-            Deadline = deadline,
-            AssignedArtisanId = assignedArtisanId
-        };
+        Id = id;
+        ClientId = clientId;
+        TotalPrice = totalPrice;
+        MeasurementsJson = measurementsJson;
+        Deadline = deadline;
+        Status = OrderStatus.Draft;
+        DepositPaid = 0;
     }
 
     public void Advance()
     {
         if (!ValidTransitions.TryGetValue(Status, out var nextStatus))
-            throw new DomainException($"Order in status '{Status}' cannot be advanced further.");
+            throw new DomainException($"Order in status '{Status}' cannot be advanced.");
 
         if (Status == OrderStatus.Draft)
         {
-            var minimumDeposit = TotalPrice * 0.30m;
-            if (DepositPaid < minimumDeposit)
+            if (DepositPaid < TotalPrice * 0.30m)
                 throw new DomainException(
-                    $"A minimum deposit of 30% ({minimumDeposit:C}) is required to confirm the order. " +
-                    $"Current deposit: {DepositPaid:C}.");
+                    $"Cannot confirm order: deposit paid ({DepositPaid:C}) must be at least 30% of total price ({TotalPrice * 0.30m:C}).");
         }
 
         Status = nextStatus;
@@ -72,19 +65,19 @@ public class Order
         if (Status == OrderStatus.Delivered)
             throw new DomainException("Cannot reject an already delivered order.");
 
-        if (string.IsNullOrWhiteSpace(reason))
-            throw new DomainException("A reason must be provided when rejecting an order.");
-
         Status = OrderStatus.Draft;
+        RejectionReason = reason;
     }
 
     public void RegisterDeposit(decimal amount)
     {
         if (amount <= 0)
             throw new DomainException("Deposit amount must be positive.");
-        if (DepositPaid + amount > TotalPrice)
-            throw new DomainException("Total deposits cannot exceed the order total price.");
-
         DepositPaid += amount;
+    }
+
+    public void AssignArtisan(Guid artisanId)
+    {
+        AssignedArtisanId = artisanId;
     }
 }

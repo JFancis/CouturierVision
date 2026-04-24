@@ -7,74 +7,100 @@ namespace CouturierVision.Domain.Tests;
 
 public class OrderStateMachineTests
 {
-    private static Order CreateDraftOrderWithDeposit(decimal total = 100m, decimal deposit = 30m)
+    private static Order CreateOrder(decimal totalPrice = 100m, decimal depositPaid = 0m)
     {
-        var order = Order.Create(Guid.NewGuid(), total, "{}", DateTime.UtcNow.AddDays(30));
-        if (deposit > 0)
-            order.RegisterDeposit(deposit);
+        var order = new Order(Guid.NewGuid(), Guid.NewGuid(), totalPrice, "{}", DateTime.UtcNow.AddDays(30));
+        if (depositPaid > 0)
+            order.RegisterDeposit(depositPaid);
         return order;
     }
 
-    [Theory]
-    [InlineData(OrderStatus.Draft, OrderStatus.Confirmed)]
-    [InlineData(OrderStatus.Confirmed, OrderStatus.Cutting)]
-    [InlineData(OrderStatus.Cutting, OrderStatus.Assembly)]
-    [InlineData(OrderStatus.Assembly, OrderStatus.Fitting)]
-    [InlineData(OrderStatus.Fitting, OrderStatus.Finishing)]
-    [InlineData(OrderStatus.Finishing, OrderStatus.Ready)]
-    [InlineData(OrderStatus.Ready, OrderStatus.Delivered)]
-    public void Advance_ValidTransition_ChangesStatus(OrderStatus from, OrderStatus expected)
+    [Fact]
+    public void Draft_To_Confirmed_WithSufficientDeposit_Succeeds()
     {
-        var order = CreateDraftOrderWithDeposit();
-        AdvanceTo(order, from);
+        var order = CreateOrder(100m, 30m);
         order.Advance();
-        Assert.Equal(expected, order.Status);
+        Assert.Equal(OrderStatus.Confirmed, order.Status);
     }
 
     [Fact]
-    public void Advance_FromDelivered_ThrowsDomainException()
+    public void Draft_To_Confirmed_WithInsufficientDeposit_ThrowsDomainException()
     {
-        var order = CreateDraftOrderWithDeposit();
-        AdvanceTo(order, OrderStatus.Delivered);
+        var order = CreateOrder(100m, 29m);
         Assert.Throws<DomainException>(() => order.Advance());
     }
 
     [Fact]
-    public void Reject_ResetsStatusToDraft()
+    public void Confirmed_To_Cutting_Succeeds()
     {
-        var order = CreateDraftOrderWithDeposit();
-        order.Advance(); // Confirmed
-        order.Reject("Customer request");
+        var order = CreateOrder(100m, 30m);
+        order.Advance(); // Draft -> Confirmed
+        order.Advance(); // Confirmed -> Cutting
+        Assert.Equal(OrderStatus.Cutting, order.Status);
+    }
+
+    [Fact]
+    public void Cutting_To_Assembly_Succeeds()
+    {
+        var order = CreateOrder(100m, 30m);
+        order.Advance(); order.Advance(); order.Advance();
+        Assert.Equal(OrderStatus.Assembly, order.Status);
+    }
+
+    [Fact]
+    public void Assembly_To_Fitting_Succeeds()
+    {
+        var order = CreateOrder(100m, 30m);
+        order.Advance(); order.Advance(); order.Advance(); order.Advance();
+        Assert.Equal(OrderStatus.Fitting, order.Status);
+    }
+
+    [Fact]
+    public void Fitting_To_Finishing_Succeeds()
+    {
+        var order = CreateOrder(100m, 30m);
+        order.Advance(); order.Advance(); order.Advance(); order.Advance(); order.Advance();
+        Assert.Equal(OrderStatus.Finishing, order.Status);
+    }
+
+    [Fact]
+    public void Finishing_To_Ready_Succeeds()
+    {
+        var order = CreateOrder(100m, 30m);
+        for (int i = 0; i < 6; i++) order.Advance();
+        Assert.Equal(OrderStatus.Ready, order.Status);
+    }
+
+    [Fact]
+    public void Ready_To_Delivered_Succeeds()
+    {
+        var order = CreateOrder(100m, 30m);
+        for (int i = 0; i < 7; i++) order.Advance();
+        Assert.Equal(OrderStatus.Delivered, order.Status);
+    }
+
+    [Fact]
+    public void Delivered_Cannot_Advance_ThrowsDomainException()
+    {
+        var order = CreateOrder(100m, 30m);
+        for (int i = 0; i < 7; i++) order.Advance();
+        Assert.Throws<DomainException>(() => order.Advance());
+    }
+
+    [Fact]
+    public void Reject_ResetsTo_Draft()
+    {
+        var order = CreateOrder(100m, 30m);
+        order.Advance(); // Draft -> Confirmed
+        order.Reject("Client changed mind");
         Assert.Equal(OrderStatus.Draft, order.Status);
     }
 
     [Fact]
-    public void Reject_DeliveredOrder_ThrowsDomainException()
+    public void Reject_Delivered_ThrowsDomainException()
     {
-        var order = CreateDraftOrderWithDeposit();
-        AdvanceTo(order, OrderStatus.Delivered);
-        Assert.Throws<DomainException>(() => order.Reject("Some reason"));
-    }
-
-    [Fact]
-    public void Reject_WithEmptyReason_ThrowsDomainException()
-    {
-        var order = CreateDraftOrderWithDeposit();
-        order.Advance();
-        Assert.Throws<DomainException>(() => order.Reject(""));
-    }
-
-    private static void AdvanceTo(Order order, OrderStatus target)
-    {
-        var sequence = new[]
-        {
-            OrderStatus.Draft, OrderStatus.Confirmed, OrderStatus.Cutting,
-            OrderStatus.Assembly, OrderStatus.Fitting, OrderStatus.Finishing,
-            OrderStatus.Ready, OrderStatus.Delivered
-        };
-        var currentIndex = Array.IndexOf(sequence, order.Status);
-        var targetIndex = Array.IndexOf(sequence, target);
-        for (int i = currentIndex; i < targetIndex; i++)
-            order.Advance();
+        var order = CreateOrder(100m, 30m);
+        for (int i = 0; i < 7; i++) order.Advance();
+        Assert.Throws<DomainException>(() => order.Reject("reason"));
     }
 }

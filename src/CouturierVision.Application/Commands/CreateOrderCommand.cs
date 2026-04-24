@@ -1,5 +1,5 @@
-using CouturierVision.Application.DTOs;
 using MediatR;
+using CouturierVision.Application.DTOs;
 
 namespace CouturierVision.Application.Commands;
 
@@ -7,5 +7,4 @@ public record CreateOrderCommand(
     Guid ClientId,
     decimal TotalPrice,
     string MeasurementsJson,
-    DateTime Deadline,
-    Guid? AssignedArtisanId = null) : IRequest<OrderDto>;
+    DateTime Deadline) : IRequest<OrderDto>;

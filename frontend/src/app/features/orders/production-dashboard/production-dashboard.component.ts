@@ -1,146 +1,178 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { OrderService } from '../../../core/services/order.service';
 import {
-  ORDER_STATUS_COLUMNS,
-  OrderStatus,
-  STATUS_COLORS,
-  STATUS_LABELS,
-} from '../../../core/models/order.model';
+  Component,
+  OnInit,
+  signal,
+  inject,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { OrderDto, OrderService, OrderStatus } from '../../../core/services/order.service';
+
+interface KanbanColumn {
+  status: OrderStatus;
+  label: string;
+  colorClass: string;
+}
 
 @Component({
   selector: 'app-production-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   template: `
-    <div class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">Tableau de Production</h1>
-        <button
-          (click)="showNewOrderForm.set(!showNewOrderForm())"
-          class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
-          + Nouvelle commande
-        </button>
-      </div>
+    <div class="min-h-screen bg-gray-100 dark:bg-gray-900 p-4" role="main">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+        Tableau de bord de production
+      </h1>
 
-      @if (showNewOrderForm()) {
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 class="text-lg font-semibold mb-4">Créer une commande</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">ID Client</label>
-              <input [(ngModel)]="newOrder.clientId" type="text"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="UUID du client">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Prix total (€)</label>
-              <input [(ngModel)]="newOrder.totalPrice" type="number"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="0.00">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Date limite</label>
-              <input [(ngModel)]="newOrder.deadline" type="date"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Mesures (JSON)</label>
-              <input [(ngModel)]="newOrder.measurementsJson" type="text"
-                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder='{"chest":95,"waist":80}'>
-            </div>
-          </div>
-          <div class="flex gap-3 mt-4">
-            <button (click)="createOrder()"
-              class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
-              Créer
-            </button>
-            <button (click)="showNewOrderForm.set(false)"
-              class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
-              Annuler
-            </button>
-          </div>
-          @if (errorMsg()) {
-            <p class="mt-2 text-sm text-red-600">{{ errorMsg() }}</p>
-          }
+      @if (loading()) {
+        <div class="flex justify-center items-center h-64" role="status" aria-label="Chargement en cours">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      }
-
-      <!-- Kanban Board -->
-      <div class="overflow-x-auto pb-4">
-        <div class="flex gap-4 min-w-max">
-          @for (status of statusColumns; track status) {
-            <div class="w-56 flex-shrink-0">
-              <div class="flex items-center justify-between mb-2 px-1">
-                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                  {{ statusLabels[status] }}
-                </h3>
-                <span class="bg-gray-200 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                  {{ (orderService.ordersByStatus().get(status) ?? []).length }}
-                </span>
+      } @else {
+        <div class="flex gap-4 overflow-x-auto pb-4" role="list" aria-label="Colonnes de production">
+          @for (column of kanbanColumns; track column.status) {
+            <div
+              class="flex-shrink-0 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-md"
+              role="listitem"
+              [attr.aria-label]="'Colonne ' + column.label"
+            >
+              <div class="p-4 border-b dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                  <h2 class="font-semibold text-gray-700 dark:text-gray-200" [attr.id]="'col-' + column.status">
+                    {{ column.label }}
+                  </h2>
+                  <span
+                    class="text-xs font-medium px-2 py-1 rounded-full"
+                    [class]="column.colorClass"
+                    [attr.aria-label]="ordersForStatus(column.status).length + ' commandes'"
+                  >
+                    {{ ordersForStatus(column.status).length }}
+                  </span>
+                </div>
               </div>
-              <div class="space-y-2 min-h-16">
-                @for (order of (orderService.ordersByStatus().get(status) ?? []); track order.id) {
-                  <div [class]="'rounded-lg border-2 p-3 shadow-sm cursor-default ' + statusColors[status]">
-                    <div class="text-xs text-gray-500 mb-1 truncate">{{ order.id.substring(0, 8) }}…</div>
-                    <div class="font-semibold text-sm text-gray-800">{{ order.totalPrice | currency:'EUR' }}</div>
-                    <div class="text-xs text-gray-500 mt-1">
-                      Acompte: {{ order.depositPercentage }}%
+
+              <div
+                class="p-3 space-y-3 min-h-32"
+                role="list"
+                [attr.aria-labelledby]="'col-' + column.status"
+              >
+                @for (order of ordersForStatus(column.status); track order.id) {
+                  <div
+                    class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow focus-visible:ring-2 focus-visible:ring-blue-500"
+                    role="listitem"
+                    tabindex="0"
+                    [attr.aria-label]="'Commande de ' + (order.clientName ?? order.clientId)"
+                  >
+                    <div class="flex justify-between items-start mb-2">
+                      <span class="font-medium text-gray-800 dark:text-white text-sm">
+                        {{ order.clientName ?? ('Client #' + order.clientId.substring(0, 8)) }}
+                      </span>
                     </div>
-                    <div class="text-xs text-gray-400">
-                      Échéance: {{ order.deadline | date:'dd/MM/yy' }}
+
+                    <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                      <div class="flex items-center gap-1" [attr.aria-label]="'Échéance: ' + formatDate(order.deadline)">
+                        <span>📅</span>
+                        <span>{{ formatDate(order.deadline) }}</span>
+                      </div>
+
+                      @if (order.artisanName) {
+                        <div class="flex items-center gap-1" [attr.aria-label]="'Artisan: ' + order.artisanName">
+                          <span>👤</span>
+                          <span>{{ order.artisanName }}</span>
+                        </div>
+                      }
                     </div>
-                    @if (order.status !== 'Delivered') {
-                      <button
-                        (click)="advance(order.id)"
-                        class="mt-2 w-full text-xs bg-white border border-gray-300 rounded px-2 py-1 hover:bg-gray-50 transition-colors font-medium text-gray-700">
-                        Avancer →
-                      </button>
-                    }
+
+                    <div class="mt-2">
+                      <div class="flex justify-between text-xs mb-1">
+                        <span class="text-gray-500 dark:text-gray-400">Acompte</span>
+                        <span
+                          class="font-semibold"
+                          [class.text-green-600]="getDepositPercent(order) >= 30"
+                          [class.text-red-500]="getDepositPercent(order) < 30"
+                          [attr.aria-label]="getDepositPercent(order) + '% d\\'acompte payé'"
+                        >
+                          {{ getDepositPercent(order) }}%
+                        </span>
+                      </div>
+                      <div
+                        class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1.5"
+                        role="progressbar"
+                        [attr.aria-valuenow]="getDepositPercent(order)"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        <div
+                          class="h-1.5 rounded-full transition-all"
+                          [class.bg-green-500]="getDepositPercent(order) >= 30"
+                          [class.bg-red-400]="getDepositPercent(order) < 30"
+                          [style.width]="getDepositPercent(order) + '%'"
+                        ></div>
+                      </div>
+                    </div>
+
+                    <button
+                      class="mt-3 w-full min-h-[44px] text-xs font-medium py-2 px-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-700 transition-colors"
+                      (click)="advanceOrder(order)"
+                      [attr.aria-label]="'Avancer la commande de ' + (order.clientName ?? order.clientId)"
+                    >
+                      Avancer →
+                    </button>
                   </div>
                 }
               </div>
             </div>
           }
         </div>
-      </div>
+      }
     </div>
-  `
+  `,
 })
-export class ProductionDashboardComponent {
-  protected readonly orderService = inject(OrderService);
+export class ProductionDashboardComponent implements OnInit {
+  private orderService = inject(OrderService);
 
-  protected readonly statusColumns = ORDER_STATUS_COLUMNS;
-  protected readonly statusLabels = STATUS_LABELS;
-  protected readonly statusColors = STATUS_COLORS;
+  orders = signal<OrderDto[]>([]);
+  loading = signal(true);
 
-  protected readonly showNewOrderForm = signal(false);
-  protected readonly errorMsg = signal('');
+  readonly kanbanColumns: KanbanColumn[] = [
+    { status: 'Cutting', label: 'Coupe', colorClass: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200' },
+    { status: 'Assembly', label: 'Montage', colorClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' },
+    { status: 'Fitting', label: 'Essayage', colorClass: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200' },
+    { status: 'Finishing', label: 'Finitions', colorClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-200' },
+    { status: 'Ready', label: 'Prêt', colorClass: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' },
+  ];
 
-  protected newOrder = {
-    clientId: '',
-    totalPrice: 0,
-    measurementsJson: '{}',
-    deadline: '',
-  };
+  ordersForStatus = (status: OrderStatus): OrderDto[] =>
+    this.orders().filter(o => o.status === status);
 
-  createOrder() {
-    this.errorMsg.set('');
-    const deadline = new Date(this.newOrder.deadline).toISOString();
-    this.orderService.createOrder({ ...this.newOrder, deadline }).subscribe({
-      next: () => {
-        this.showNewOrderForm.set(false);
-        this.newOrder = { clientId: '', totalPrice: 0, measurementsJson: '{}', deadline: '' };
-      },
-      error: (err) => this.errorMsg.set(err?.error?.error ?? 'Erreur lors de la création'),
+  getDepositPercent(order: OrderDto): number {
+    return this.orderService.getDepositPercent(order);
+  }
+
+  formatDate(dateStr: string): string {
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
     });
   }
 
-  advance(orderId: string) {
-    this.orderService.advanceOrder(orderId).subscribe({
-      error: (err) => alert(err?.error?.error ?? 'Erreur lors de l\'avancement'),
+  ngOnInit(): void {
+    this.orderService.getOrders().subscribe({
+      next: (orders) => {
+        this.orders.set(orders);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  advanceOrder(order: OrderDto): void {
+    this.orderService.advanceOrder(order.id).subscribe({
+      next: (updated) => {
+        this.orders.update(orders =>
+          orders.map(o => o.id === updated.id ? updated : o)
+        );
+      },
     });
   }
 }

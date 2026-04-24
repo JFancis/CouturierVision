@@ -14,8 +14,8 @@ public class ClientRepository : IClientRepository
         _context = context;
     }
 
-    public async Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+    public async Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        => await _context.Clients.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task AddAsync(Client client, CancellationToken cancellationToken = default)
     {

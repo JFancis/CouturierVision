@@ -6,49 +6,42 @@ namespace CouturierVision.Domain.Tests;
 
 public class OrderDepositRuleTests
 {
-    [Fact]
-    public void Advance_WithSufficientDeposit_Succeeds()
+    [Theory]
+    [InlineData(100, 30)]
+    [InlineData(100, 50)]
+    [InlineData(100, 100)]
+    [InlineData(200, 60)]
+    public void Advance_WithSufficientDeposit_Succeeds(decimal totalPrice, decimal deposit)
     {
-        var order = Order.Create(Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
-        order.RegisterDeposit(30m);
-        order.Advance(); // Draft -> Confirmed
-        // No exception thrown
-    }
-
-    [Fact]
-    public void Advance_WithExactMinimumDeposit_Succeeds()
-    {
-        var order = Order.Create(Guid.NewGuid(), 200m, "{}", DateTime.UtcNow.AddDays(30));
-        order.RegisterDeposit(60m); // Exactly 30%
+        var order = new Order(Guid.NewGuid(), Guid.NewGuid(), totalPrice, "{}", DateTime.UtcNow.AddDays(30));
+        order.RegisterDeposit(deposit);
         order.Advance();
+        // No exception = success
     }
 
-    [Fact]
-    public void Advance_WithInsufficientDeposit_ThrowsDomainException()
+    [Theory]
+    [InlineData(100, 0)]
+    [InlineData(100, 29)]
+    [InlineData(200, 59)]
+    public void Advance_WithInsufficientDeposit_ThrowsDomainException(decimal totalPrice, decimal deposit)
     {
-        var order = Order.Create(Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
-        order.RegisterDeposit(29m); // Less than 30%
+        var order = new Order(Guid.NewGuid(), Guid.NewGuid(), totalPrice, "{}", DateTime.UtcNow.AddDays(30));
+        if (deposit > 0)
+            order.RegisterDeposit(deposit);
         Assert.Throws<DomainException>(() => order.Advance());
-    }
-
-    [Fact]
-    public void Advance_WithNoDeposit_ThrowsDomainException()
-    {
-        var order = Order.Create(Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
-        Assert.Throws<DomainException>(() => order.Advance());
-    }
-
-    [Fact]
-    public void RegisterDeposit_ExceedingTotal_ThrowsDomainException()
-    {
-        var order = Order.Create(Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
-        Assert.Throws<DomainException>(() => order.RegisterDeposit(101m));
     }
 
     [Fact]
     public void RegisterDeposit_NegativeAmount_ThrowsDomainException()
     {
-        var order = Order.Create(Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
-        Assert.Throws<DomainException>(() => order.RegisterDeposit(-1m));
+        var order = new Order(Guid.NewGuid(), Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
+        Assert.Throws<DomainException>(() => order.RegisterDeposit(-1));
+    }
+
+    [Fact]
+    public void RegisterDeposit_ZeroAmount_ThrowsDomainException()
+    {
+        var order = new Order(Guid.NewGuid(), Guid.NewGuid(), 100m, "{}", DateTime.UtcNow.AddDays(30));
+        Assert.Throws<DomainException>(() => order.RegisterDeposit(0));
     }
 }

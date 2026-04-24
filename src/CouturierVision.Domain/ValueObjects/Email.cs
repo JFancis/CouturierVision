@@ -21,12 +21,14 @@ public sealed class Email : IEquatable<Email>
     }
 
     public bool Equals(Email? other) => other is not null && Value == other.Value;
-    public override bool Equals(object? obj) => obj is Email other && Equals(other);
+    public override bool Equals(object? obj) => obj is Email email && Equals(email);
     public override int GetHashCode() => Value.GetHashCode(StringComparison.OrdinalIgnoreCase);
     public override string ToString() => Value;
 
     public static bool operator ==(Email? left, Email? right) =>
-        left is null ? right is null : left.Equals(right);
+        left?.Equals(right) ?? right is null;
+
     public static bool operator !=(Email? left, Email? right) => !(left == right);
+
     public static implicit operator string(Email email) => email.Value;
 }

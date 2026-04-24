@@ -15,23 +15,21 @@ public class Client
 
     private Client() { }
 
-    public static Client Create(
+    public Client(
+        Guid id,
         string firstName,
         string lastName,
-        string email,
+        Email email,
         string phoneNumber,
-        string stylePreferences = "")
+        string stylePreferences)
     {
-        return new Client
-        {
-            Id = Guid.NewGuid(),
-            FirstName = firstName,
-            LastName = lastName,
-            Email = new Email(email),
-            PhoneNumber = phoneNumber,
-            StylePreferences = stylePreferences,
-            CreatedAt = DateTime.UtcNow
-        };
+        Id = id;
+        FirstName = firstName;
+        LastName = lastName;
+        Email = email;
+        PhoneNumber = phoneNumber;
+        StylePreferences = stylePreferences;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public void UpdateMeasurements(string measurementsJson)
