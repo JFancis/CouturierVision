@@ -12,6 +12,12 @@ export class ClientService {
 
   constructor(private http: HttpClient) {}
 
+  loadClients() {
+    return this.http.get<Client[]>(this.apiUrl).pipe(
+      tap(clients => this._clients.set(clients))
+    );
+  }
+
   getById(id: string) {
     return this.http.get<Client>(`${this.apiUrl}/${id}`);
   }
